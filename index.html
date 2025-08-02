@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookish - Your Online Bookstore</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { 
+            animation: fade-in 0.5s ease-out forwards; 
+            opacity: 0;
+        }
+        @keyframes slide-up {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-slide-up { animation: slide-up 0.3s ease-out forwards; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        .line-clamp-3 {
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 3;
+        }
+        @keyframes toast-in-out {
+            0% { transform: translateY(100%); opacity: 0; }
+            15% { transform: translateY(0); opacity: 1; }
+            85% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(100%); opacity: 0; }
+        }
+        .toast {
+            animation: toast-in-out 3s forwards;
+        }
+    </style>
+</head>
+<body class="bg-zinc-900 text-zinc-100 font-poppins min-h-screen">
+    <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-800 -z-10"></div>
+    
+    <div id="app-container" class="container mx-auto max-w-7xl">
+        </div>
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50"></div>
+
+    <script>
+        // --- DATA ---
+        const mockBooks = [
+            { id: 1, title: "The Guide", author: "R.K. Narayan", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1644690188i/129877.jpg", rating: 4.6, price: 349, synopsis: "The story of Raju, a tour guide, and his transformation into a spiritual guide and then one of the greatest holy men of India.", tags: ['indian-classic', 'popular', 'featured'] },
+            { id: 2, title: "The God of Small Things", author: "Arundhati Roy", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1590282886i/9777.jpg", rating: 4.4, price: 499, synopsis: "A story about the childhood experiences of fraternal twins whose lives are destroyed by the 'Love Laws'.", tags: ['indian-classic', 'new-noteworthy'] },
+            { id: 3, title: "Pride and Prejudice", author: "Jane Austen", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1320399351i/1885.jpg", rating: 4.8, price: 299, synopsis: "Follows the turbulent relationship between Elizabeth Bennet and Fitzwilliam Darcy.", tags: ['international-classic', 'popular'] },
+            { id: 4, title: "Half Girlfriend", author: "Chetan Bhagat", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1407223058i/22874559.jpg", rating: 4.1, price: 199, synopsis: "A love story between a boy from rural Bihar and a wealthy girl from Delhi.", tags: ['new-noteworthy', 'popular'] },
+            { id: 5, title: "Norwegian Wood", author: "Haruki Murakami", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1713542603i/11297.jpg", rating: 4.5, price: 550, synopsis: "A nostalgic story of loss and burgeoning sexuality in 1960s Tokyo.", tags: ['international-classic'] },
+            { id: 6, title: "Project Hail Mary", author: "Andy Weir", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1597695864i/54493401.jpg", rating: 4.8, price: 1550, synopsis: "Ryland Grace is the sole survivor on a desperate, last-chance mission to save humanity.", tags: ['popular', 'new-noteworthy'] },
+            { id: 7, title: "The Immortals of Meluha", author: "Amish Tripathi", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1334659192i/7913305.jpg", rating: 4.7, price: 450, synopsis: "The first book of the Shiva Trilogy, a fantasy re-imagining of the Hindu deity Shiva's adventures.", tags: ['popular', 'indian-classic'] },
+            { id: 8, title: "Sapiens: A Brief History of Humankind", author: "Yuval Noah Harari", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1420585954i/23692271.jpg", rating: 4.9, price: 799, synopsis: "A sweeping tour of the history of our species, from the Stone Age to the Silicon Age.", tags: ['popular', 'non-fiction'] },
+            { id: 10, title: "Wings of Fire", author: "A.P.J. Abdul Kalam", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1588286863i/634583.jpg", rating: 4.9, price: 250, synopsis: "The autobiography of the former President of India, Dr. A.P.J. Abdul Kalam.", tags: ['popular', 'indian-classic', 'non-fiction'] },
+            { id: 17, title: "And Then There Were None", author: "Agatha Christie", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1638425885i/16299.jpg", rating: 4.7, price: 450, synopsis: "Ten strangers are lured to a remote island and are killed off one by one. Who is the murderer?", tags: ['international-classic', 'popular'] },
+            { id: 18, title: "The Henna Artist", author: "Alka Joshi", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1588690086i/50607466.jpg", rating: 4.5, price: 600, synopsis: "In 1950s Jaipur, a young woman escapes an abusive marriage to become a sought-after henna artist.", tags: ['new-noteworthy', 'popular'] },
+            { id: 19, title: "To Kill a Mockingbird", author: "Harper Lee", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1553383690i/2657.jpg", rating: 4.7, price: 399, synopsis: "The unforgettable novel of a childhood in a sleepy Southern town and the crisis of conscience that rocked it.", tags: ['international-classic', 'popular'] },
+            { id: 20, title: "Atomic Habits", author: "James Clear", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1655988385i/40121378.jpg", rating: 4.8, price: 599, synopsis: "An easy & proven way to build good habits & break bad ones, offering a framework for improving every day.", tags: ['popular', 'non-fiction', 'new-noteworthy'] },
+            { id: 21, title: "A Man Called Ove", author: "Fredrik Backman", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1405259930i/18774964.jpg", rating: 4.6, price: 450, synopsis: "A grumpy yet lovable man finds his solitary world turned on its head when a boisterous young family moves in next door.", tags: ['international-classic', 'popular'] },
+            { id: 22, title: "Train to Pakistan", author: "Khushwant Singh", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1599410785i/785454.jpg", rating: 4.3, price: 249, synopsis: "A historical novel that recounts the Partition of India in 1947 through the perspective of a fictional border village.", tags: ['indian-classic', 'popular'] },
+            { id: 23, title: "The Palace of Illusions", author: "Chitra Banerjee Divakaruni", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1679444666i/1774836.jpg", rating: 4.5, price: 499, synopsis: "A retelling of the Indian epic Mahabharata as told from the perspective of Panchaali (Draupadi).", tags: ['indian-classic', 'popular', 'new-noteworthy'] },
+            { id: 24, title: "The Alchemist", author: "Paulo Coelho", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1654371463i/18144590.jpg", rating: 4.3, price: 299, synopsis: "A story about Santiago, an Andalusian shepherd boy who dreams of traveling to the pyramids of Egypt to find a worldly treasure.", tags: ['international-classic', 'popular'] },
+            { id: 25, title: "1984", author: "George Orwell", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1657781256i/61439040.jpg", rating: 4.7, price: 249, synopsis: "A dystopian novel set in a world of perpetual war, omnipresent government surveillance, and public manipulation.", tags: ['international-classic', 'popular'] },
+            { id: 26, title: "The Great Gatsby", author: "F. Scott Fitzgerald", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1490528560i/4671.jpg", rating: 4.2, price: 220, synopsis: "The story of the mysterious millionaire Jay Gatsby and his quixotic passion for the beautiful Daisy Buchanan.", tags: ['international-classic'] },
+            { id: 27, title: "The Silent Patient", author: "Alex Michaelides", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1668782119i/40097951.jpg", rating: 4.6, price: 550, synopsis: "A gripping psychological thriller of a woman's act of violence against her husband—and of the therapist obsessed with uncovering her motive.", tags: ['new-noteworthy', 'popular'] },
+            { id: 28, title: "Where the Crawdads Sing", author: "Delia Owens", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1582135294i/36809135.jpg", rating: 4.5, price: 650, synopsis: "A heartbreaking coming-of-age story and a surprising tale of possible murder that became a cultural phenomenon.", tags: ['new-noteworthy', 'popular'] },
+            { id: 29, title: "The Midnight Library", author: "Matt Haig", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1602190253i/52578297.jpg", rating: 4.4, price: 499, synopsis: "Between life and death there is a library which provides a chance to try other lives you could have lived.", tags: ['new-noteworthy', 'popular'] },
+            { id: 30, title: "Dune", author: "Frank Herbert", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1555447414i/44767458.jpg", rating: 4.8, price: 899, synopsis: "The story of Paul Atreides, heir to a noble family, and his journey on the desert planet Arrakis.", tags: ['international-classic', 'popular'] },
+            { id: 31, title: "The Lord of the Rings", author: "J.R.R. Tolkien", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1566425108i/33.jpg", rating: 4.9, price: 1800, synopsis: "The epic fantasy adventure of Frodo Baggins' quest to destroy the One Ring and defeat the dark lord Sauron.", tags: ['international-classic', 'popular'] },
+            { id: 32, title: "The Kite Runner", author: "Khaled Hosseini", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1541428344i/17165596.jpg", rating: 4.7, price: 450, synopsis: "A powerful story of friendship, betrayal, and redemption set against the backdrop of a changing Afghanistan.", tags: ['international-classic', 'popular'] },
+            { id: 33, title: "Ikigai", author: "Héctor García", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1680629184i/124950497.jpg", rating: 4.3, price: 350, synopsis: "The Japanese secret to a long and happy life. This book helps you find your own 'reason for being'.", tags: ['non-fiction', 'popular'] },
+            { id: 34, title: "The Psychology of Money", author: "Morgan Housel", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1581527774i/41881472.jpg", rating: 4.6, price: 499, synopsis: "Timeless lessons on wealth, greed, and happiness, exploring the strange ways people think about money.", tags: ['non-fiction', 'new-noteworthy'] },
+            { id: 35, title: "A Suitable Boy", author: "Vikram Seth", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1329421639i/50365.jpg", rating: 4.2, price: 999, synopsis: "Set in post-independence India, this epic novel follows the story of four families and the search for a husband for Lata Mehra.", tags: ['indian-classic', 'popular'] },
+            { id: 36, title: "The White Tiger", author: "Aravind Adiga", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1710937569i/1768603.jpg", rating: 4.1, price: 399, synopsis: "The story of Balram Halwai's epic journey from a village boy to a successful entrepreneur in modern India.", tags: ['indian-classic', 'popular'] },
+            { id: 37, title: "Malgudi Days", author: "R.K. Narayan", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1644689955i/14082.jpg", rating: 4.5, price: 299, synopsis: "A collection of charming short stories set in the fictional South Indian town of Malgudi.", tags: ['indian-classic'] },
+            { id: 38, title: "Gitanjali", author: "Rabindranath Tagore", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1348514071i/66414.jpg", rating: 4.4, price: 199, synopsis: "A collection of prose poems, spiritual and devotional in nature, that earned Tagore the Nobel Prize in Literature.", tags: ['indian-classic'] },
+            { id: 39, title: "The Anarchy", author: "William Dalrymple", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1565769891i/42972023.jpg", rating: 4.7, price: 799, synopsis: "The relentless rise of the East India Company, and the fall of the Mughal Empire. A stunning tale of corporate violence.", tags: ['non-fiction', 'indian-classic'] },
+            { id: 40, title: "Thinking, Fast and Slow", author: "Daniel Kahneman", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1317793965i/11468377.jpg", rating: 4.6, price: 650, synopsis: "Explains the two systems that drive the way we think, offering practical insights into how choices are made.", tags: ['non-fiction', 'popular'] },
+            { id: 41, title: "Educated", author: "Tara Westover", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1506026635i/35133922.jpg", rating: 4.8, price: 599, synopsis: "A memoir about a girl who, kept out of school, leaves her survivalist family to earn a PhD from Cambridge University.", tags: ['non-fiction', 'new-noteworthy'] },
+            { id: 42, title: "Becoming", author: "Michelle Obama", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1606187402i/56026766.jpg", rating: 4.8, price: 899, synopsis: "The inspiring and deeply personal memoir of the former First Lady of the United States.", tags: ['non-fiction', 'popular'] },
+            { id: 43, title: "Circe", author: "Madeline Miller", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1565909496i/35959740.jpg", rating: 4.7, price: 550, synopsis: "A feminist retelling of Greek mythology, following the goddess Circe's transformation into a formidable witch.", tags: ['new-noteworthy', 'popular'] },
+            { id: 44, title: "The Song of Achilles", author: "Madeline Miller", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1357177533i/13623848.jpg", rating: 4.7, price: 550, synopsis: "A retelling of the Trojan War and the tragic love story between the Greek heroes Achilles and Patroclus.", tags: ['new-noteworthy', 'popular'] },
+            { id: 45, title: "A Brief History of Time", author: "Stephen Hawking", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1333578746i/3869.jpg", rating: 4.5, price: 450, synopsis: "From the Big Bang to black holes, this book explores the fundamental questions of the universe in accessible language.", tags: ['non-fiction', 'popular'] },
+            { id: 46, title: "The Hitchhiker's Guide to the Galaxy", author: "Douglas Adams", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1315693761i/2119300.jpg", rating: 4.6, price: 399, synopsis: "Seconds before Earth's demolition, Arthur Dent is plucked from the planet by his friend Ford Prefect for a galactic adventure.", tags: ['international-classic', 'popular'] },
+            { id: 47, title: "The Martian", author: "Andy Weir", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1413706054i/18007564.jpg", rating: 4.7, price: 599, synopsis: "An astronaut, presumed dead and left behind on Mars, must use his ingenuity to survive and signal to Earth that he is alive.", tags: ['popular', 'new-noteworthy'] },
+            { id: 48, title: "Gone Girl", author: "Gillian Flynn", coverUrl: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1554086139i/19288043.jpg", rating: 4.4, price: 499, synopsis: "On his fifth wedding anniversary, a man's wife disappears, and under a media frenzy, his portrait of a blissful union begins to crumble.", tags: ['popular', 'new-noteworthy'] }
+        ];
+
+        // --- APP STATE ---
+        let currentScreen = 'home';
+        let selectedBook = null;
+        let searchTerm = '';
+        let cart = [];
+
+        // --- DOM ELEMENTS ---
+        const appContainer = document.getElementById('app-container');
+        const toastContainer = document.getElementById('toast-container');
+
+        // --- HELPER FUNCTIONS ---
+        const showToast = (message) => {
+            const toast = document.createElement('div');
+            toast.className = 'toast bg-teal-500 text-white font-semibold py-2 px-4 rounded-lg shadow-lg';
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // --- TEMPLATE FUNCTIONS (Generate HTML strings) ---
+        const createBookCardHTML = (book) => `
+            <div class="book-card bg-zinc-800/50 backdrop-blur-sm border border-zinc-700/50 rounded-lg overflow-hidden shadow-lg hover:shadow-teal-400/10 transition-all duration-300 flex flex-col h-full group relative">
+                <div onclick="handleSelectBook(${book.id})" class="cursor-pointer">
+                    <img src="${book.coverUrl}" alt="${book.title}" class="w-full h-48 sm:h-56 object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.onerror=null;this.src='https://placehold.co/300x450/0f172a/e2e8f0?text=Image+Not%0AFound';">
+                    <div class="p-3 flex flex-col flex-grow">
+                        <h3 class="text-md font-bold text-zinc-100 truncate">${book.title}</h3>
+                        <p class="text-xs text-zinc-400 mb-2 truncate">${book.author}</p>
+                    </div>
+                </div>
+                <div class="flex items-center p-3 mt-auto pt-2">
+                    <i data-lucide="star" class="w-4 h-4 text-teal-400 fill-current"></i>
+                    <span class="text-zinc-100 ml-1 text-sm">${book.rating}</span>
+                    <span class="text-md font-semibold text-teal-400 ml-auto">₹${book.price}</span>
+                </div>
+                <button onclick="handleAddToCart(${book.id})" class="absolute top-2 right-2 bg-zinc-900/50 p-2 rounded-full backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-teal-500">
+                    <i data-lucide="shopping-cart" class="w-5 h-5 text-zinc-100"></i>
+                </button>
+            </div>
+        `;
+
+        const createHeroSectionHTML = (book) => {
+            if (!book) return '';
+            return `<div class="p-4 md:p-8 mb-8 rounded-lg relative overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-t from-zinc-900 to-transparent z-10"></div>
+                    <img src="${book.coverUrl}" class="absolute inset-0 w-full h-full object-cover object-center opacity-20" alt="Background for ${book.title}">
+                    <div class="relative z-20 flex flex-col md:flex-row items-center gap-8">
+                        <img src="${book.coverUrl}" alt="${book.title}" class="w-48 md:w-60 rounded-lg shadow-2xl -rotate-3 transition-transform hover:rotate-0 cursor-pointer" onclick="handleSelectBook(${book.id})">
+                        <div class="text-center md:text-left">
+                            <h1 class="text-3xl md:text-5xl font-bold text-white mb-2">${book.title}</h1>
+                            <p class="text-xl text-zinc-300 mb-4">${book.author}</p>
+                            <p class="text-zinc-400 max-w-2xl mb-6 line-clamp-3">${book.synopsis}</p>
+                            <button onclick="handleSelectBook(${book.id})" class="bg-teal-500 text-white font-bold py-3 px-8 rounded-full flex items-center gap-2 hover:bg-teal-400 transition-colors mx-auto md:mx-0">
+                                <i data-lucide="book-open" class="w-5 h-5"></i>
+                                Discover More
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+        };
+        
+        const createBookContentHTML = (filteredBooks) => {
+            if (filteredBooks) {
+                return `<div class="px-4"><h2 class="text-2xl font-semibold text-zinc-100 mb-4">Search Results</h2>${filteredBooks.length > 0 ? `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">${filteredBooks.map(createBookCardHTML).join('')}</div>` : `<p class="text-zinc-400 text-center py-8">No books found matching your search.</p>`}</div>`;
+            }
+            const featuredBook = mockBooks.find(b => b.tags.includes('featured'));
+            const popularBooks = mockBooks.filter(b => b.tags.includes('popular'));
+            const newReleases = mockBooks.filter(b => b.tags.includes('new-noteworthy'));
+            const indianClassics = mockBooks.filter(b => b.tags.includes('indian-classic'));
+            const internationalClassics = mockBooks.filter(b => b.tags.includes('international-classic'));
+            const createBookCarouselHTML = (title, books) => `<div class="mb-8"><h2 class="text-2xl font-semibold text-zinc-100 mb-4 px-4">${title}</h2><div class="flex overflow-x-auto space-x-4 pb-4 px-4 scrollbar-hide">${books.map(book => `<div class="flex-shrink-0 w-40 sm:w-44">${createBookCardHTML(book)}</div>`).join('')}</div></div>`;
+            return `<div class="animate-fade-in">${createHeroSectionHTML(featuredBook)}</div>
+                    <div class="animate-fade-in" style="animation-delay: 200ms">${createBookCarouselHTML("Popular Now", popularBooks)}</div>
+                    <div class="animate-fade-in" style="animation-delay: 400ms">${createBookCarouselHTML("New & Noteworthy", newReleases)}</div>
+                    <div class="animate-fade-in" style="animation-delay: 600ms">${createBookCarouselHTML("Indian Classics", indianClassics)}</div>
+                    <div class="animate-fade-in" style="animation-delay: 800ms">${createBookCarouselHTML("International Bestsellers", internationalClassics)}</div>`;
+        };
+        
+        const createHomeScreenHTML = () => `
+            <div class="py-4">
+                <header class="mb-6 px-4 flex justify-between items-center">
+                    <h1 class="text-3xl font-bold text-white tracking-wider cursor-pointer" onclick="handleGoHome()">Bookish</h1>
+                    <div id="cart-icon-container"></div>
+                </header>
+                <div class="relative mb-8 px-4">
+                    <input type="text" id="search-input" placeholder="Search for your next adventure..." value="${searchTerm}" class="w-full bg-zinc-800/60 backdrop-blur-sm border border-zinc-700 text-zinc-100 rounded-full py-3 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    <i data-lucide="search" class="absolute left-8 top-1/2 -translate-y-1/2 text-zinc-400 w-5 h-5"></i>
+                </div>
+                <div id="book-content-container"></div>
+            </div>`;
+        
+        const createBookDetailsScreenHTML = (book) => `
+            <div class="p-4 animate-fade-in">
+                <header class="flex items-center mb-6">
+                    <button id="back-button" class="p-2 rounded-full hover:bg-zinc-700/50"><i data-lucide="arrow-left" class="w-6 h-6 text-zinc-100"></i></button>
+                    <h1 class="text-2xl font-bold text-zinc-100 text-center flex-1 pr-8 truncate">${book.title}</h1>
+                </header>
+                <div class="flex flex-col md:flex-row gap-8">
+                    <div class="md:w-1/3 flex-shrink-0"><img src="${book.coverUrl}" alt="${book.title}" class="w-full rounded-lg shadow-2xl shadow-black/30" onerror="this.onerror=null;this.src='https://placehold.co/300x450/0f172a/e2e8f0?text=Image+Not%0AFound';"></div>
+                    <div class="md:w-2/3"><p class="text-xl text-zinc-300 mb-2">${book.author}</p>
+                        <div class="flex items-center mb-4"><div class="flex items-center">${[...Array(5)].map((_, i) => `<i data-lucide="star" class="w-5 h-5 ${i < Math.round(book.rating) ? 'text-teal-400' : 'text-zinc-600'}" style="fill: currentColor;"></i>`).join('')}</div><span class="text-zinc-100 ml-2">${book.rating} stars</span></div>
+                        <p class="text-zinc-400 mb-6 leading-relaxed">${book.synopsis}</p>
+                        <div class="flex items-center justify-between bg-zinc-800/50 backdrop-blur-sm border border-zinc-700 p-4 rounded-lg">
+                            <span class="text-3xl font-bold text-teal-400">₹${book.price}</span>
+                            <button onclick="handleAddToCart(${book.id})" class="bg-teal-500 text-white font-bold py-3 px-6 rounded-full flex items-center gap-2 hover:bg-teal-400 transition-colors"><i data-lucide="shopping-cart" class="w-5 h-5"></i>Add to Cart</button>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+
+        const createCartScreenHTML = () => {
+            if (cart.length === 0) {
+                return `<div class="p-4 animate-fade-in"><header class="flex items-center mb-6"><button onclick="handleGoHome()" class="p-2 rounded-full hover:bg-zinc-700/50"><i data-lucide="arrow-left" class="w-6 h-6 text-zinc-100"></i></button><h1 class="text-2xl font-bold text-zinc-100 text-center flex-1 pr-8">Shopping Cart</h1></header><div class="text-center py-20"><p class="text-zinc-400 text-lg">Your cart is empty.</p><button onclick="handleGoHome()" class="mt-4 bg-teal-500 text-white font-bold py-2 px-6 rounded-full hover:bg-teal-400">Start Shopping</button></div></div>`;
+            }
+            const cartItemsHTML = cart.map(item => {
+                const book = mockBooks.find(b => b.id === item.id);
+                return `<div class="flex items-center gap-4 p-4 border-b border-zinc-700">
+                        <img src="${book.coverUrl}" alt="${book.title}" class="w-16 h-24 object-cover rounded-md">
+                        <div class="flex-grow"><h3 class="font-semibold">${book.title}</h3><p class="text-sm text-zinc-400">${book.author}</p></div>
+                        <div class="flex items-center gap-3"><button onclick="handleChangeQuantity(${item.id}, -1)" class="p-1 rounded-full bg-zinc-700 hover:bg-zinc-600"><i data-lucide="minus" class="w-4 h-4"></i></button><span>${item.quantity}</span><button onclick="handleChangeQuantity(${item.id}, 1)" class="p-1 rounded-full bg-zinc-700 hover:bg-zinc-600"><i data-lucide="plus" class="w-4 h-4"></i></button></div>
+                        <p class="w-20 text-right font-semibold">₹${book.price * item.quantity}</p>
+                        <button onclick="handleRemoveFromCart(${item.id})" class="p-2 rounded-full hover:bg-zinc-700"><i data-lucide="trash-2" class="w-5 h-5 text-red-500"></i></button>
+                    </div>`;
+            }).join('');
+            const totalAmount = cart.reduce((total, item) => {
+                const book = mockBooks.find(b => b.id === item.id);
+                return total + (book.price * item.quantity);
+            }, 0);
+            return `<div class="p-4 animate-fade-in">
+                    <header class="flex items-center mb-6"><button onclick="handleGoHome()" class="p-2 rounded-full hover:bg-zinc-700/50"><i data-lucide="arrow-left" class="w-6 h-6 text-zinc-100"></i></button><h1 class="text-2xl font-bold text-zinc-100 text-center flex-1 pr-8">Shopping Cart</h1></header>
+                    <div class="bg-zinc-800/50 rounded-lg">${cartItemsHTML}</div>
+                    <div class="mt-6 flex justify-end items-center gap-6 p-4">
+                        <p class="text-xl">Total: <span class="font-bold text-teal-400">₹${totalAmount}</span></p>
+                        <button onclick="alert('Proceeding to checkout with a total of ₹${totalAmount}!')" class="bg-teal-500 text-white font-bold py-3 px-8 rounded-full hover:bg-teal-400">Checkout</button>
+                    </div>
+                </div>`;
+        }
+
+        // --- RENDER & EVENT BINDING ---
+        function renderCartIcon() {
+            const cartIconContainer = document.getElementById('cart-icon-container');
+            if (!cartIconContainer) return;
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            cartIconContainer.innerHTML = `<button onclick="handleGoToCart()" class="relative p-2 rounded-full hover:bg-zinc-700/50">
+                    <i data-lucide="shopping-cart" class="w-6 h-6 text-zinc-100"></i>
+                    ${totalItems > 0 ? `<span class="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">${totalItems}</span>` : ''}
+                </button>`;
+            lucide.createIcons();
+        }
+        
+        function renderBookContent() {
+            const bookContentContainer = document.getElementById('book-content-container');
+            if (!bookContentContainer) return;
+            const filteredBooks = searchTerm.trim() !== '' ? mockBooks.filter(b => b.title.toLowerCase().includes(searchTerm.toLowerCase()) || b.author.toLowerCase().includes(searchTerm.toLowerCase())) : null;
+            bookContentContainer.innerHTML = createBookContentHTML(filteredBooks);
+            lucide.createIcons();
+        }
+        
+        function renderApp() {
+            appContainer.innerHTML = '';
+            if (currentScreen === 'home') {
+                appContainer.innerHTML = createHomeScreenHTML();
+                renderBookContent();
+                renderCartIcon();
+                document.getElementById('search-input').addEventListener('input', handleSearch);
+            } else if (currentScreen === 'details' && selectedBook) {
+                appContainer.innerHTML = createBookDetailsScreenHTML(selectedBook);
+                document.getElementById('back-button').addEventListener('click', handleGoHome);
+            } else if (currentScreen === 'cart') {
+                appContainer.innerHTML = createCartScreenHTML();
+            }
+            lucide.createIcons();
+        }
+        
+        // --- EVENT HANDLERS & ROUTING ---
+        function handleSelectBook(bookId) {
+            window.location.hash = `book-${bookId}`;
+        }
+
+        function handleGoHome() {
+            window.location.hash = '';
+        }
+        
+        function handleGoToCart() {
+            window.location.hash = 'cart';
+        }
+
+        function handleSearch(event) {
+            searchTerm = event.target.value;
+            renderBookContent();
+        }
+        
+        // --- CART LOGIC HANDLERS ---
+        function handleAddToCart(bookId) {
+            const bookInCart = cart.find(item => item.id === bookId);
+            if (bookInCart) { bookInCart.quantity++; } 
+            else { cart.push({ id: bookId, quantity: 1 }); }
+            const book = mockBooks.find(b => b.id === bookId);
+            showToast(`${book.title} added to cart!`);
+            renderCartIcon();
+        }
+        
+        function handleRemoveFromCart(bookId) {
+            cart = cart.filter(item => item.id !== bookId);
+            router(); // Re-render the current view
+        }
+        
+        function handleChangeQuantity(bookId, change) {
+            const bookInCart = cart.find(item => item.id === bookId);
+            if (!bookInCart) return;
+            if (bookInCart.quantity + change <= 0) {
+                handleRemoveFromCart(bookId);
+            } else {
+                bookInCart.quantity += change;
+                router(); // Re-render the current view
+            }
+        }
+
+        // --- Main Router Function ---
+        function router() {
+            const hash = window.location.hash.substring(1);
+            if (hash.startsWith('book-')) {
+                const bookId = parseInt(hash.substring(5));
+                selectedBook = mockBooks.find(b => b.id === bookId);
+                if (selectedBook) {
+                    currentScreen = 'details';
+                } else {
+                    currentScreen = 'home'; 
+                }
+            } else if (hash === 'cart') {
+                currentScreen = 'cart';
+            } else {
+                currentScreen = 'home';
+                selectedBook = null;
+            }
+            renderApp();
+        }
+
+        // --- INITIAL LOAD ---
+        window.addEventListener('hashchange', router);
+        document.addEventListener('DOMContentLoaded', router);
+    </script>
+    
+    <script>
+        window.watsonAssistantChatOptions = {
+            integrationID: "faa9459a-b2bf-439e-9fb1-e24765654937",
+            region: "au-syd",
+            serviceInstanceID: "fd956433-3f33-45fd-adad-24e16a311847",
+            onLoad: async (instance) => { await instance.render(); }
+        };
+        setTimeout(function(){
+            const t=document.createElement('script');
+            t.src="https://web-chat.global.assistant.watson.appdomain.cloud/versions/" + (window.watsonAssistantChatOptions.clientVersion || 'latest') + "/WatsonAssistantChatEntry.js";
+            document.head.appendChild(t);
+        });
+    </script>
+</body>
+</html>
